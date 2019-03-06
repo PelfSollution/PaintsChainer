@@ -111,4 +111,4 @@ def start(opts):
     print("available handlers: {}".format(available_handlers.keys()))
     sio.start_background_task(register, opts.self_url, opts.backend_url)
 
-    web.run_app(app, port=8081)
+    web.run_app(app, port=8082)

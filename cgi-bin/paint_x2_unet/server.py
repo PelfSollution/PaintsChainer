@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 import chainer
 from PIL import Image
+from PIL import ImageOps
 from chainer import cuda, serializers, Variable  # , optimizers, training
 import cv2
 import os.path
@@ -130,17 +131,25 @@ def colorize(lines, colour, blur=0, s_size=128):
     return img
 
 @canvas_message_handler('colorize')
-def colorize(img):
+def colorize_handler(img):
+    img = ImageOps.flip(img)
+    #img = img.resize((512, 512), resample=Image.NEAREST)
     arr = np.asarray(img)
+    inshape = arr.shape[:2]
+    print(inshape)
     # only black
     lines = np.copy(arr)
-    lines[lines.sum(2) != 0, :] = 255
-    lines[:, :, 3] = 255
+    linebits = np.logical_and(lines[:, :, 0] == lines[:, :, 1], lines[:, :, 1] == lines[:, :, 2])
+    lines[np.logical_not(linebits), :] = 255
+    #lines[:, :, 3] = 255
+    Image.fromarray(lines).save('lines.png')
     colours = np.copy(arr)
-    colours[colours.sum(2) == 0, :] = 0
+    # turn white to transpanet and black to transparent
+    colours[linebits, :] = 0
+    Image.fromarray(colours).save('colour.png')
     # only colours
     result = colorize(lines, colours)
-    return Image.fromarray(result)
+    return Image.fromarray(result).resize(inshape, resample=Image.LANCZOS)
 
 def args():
     parser = argparse.ArgumentParser()
